@@ -2,6 +2,9 @@ package com.alioth.tutubackend.common;
 
 import com.alioth.tutubackend.exception.ErrorCode;
 
+/**
+ * 统一返回结果工具类
+ */
 public class ResultUtils {
 
     /**
