@@ -1,0 +1,36 @@
+server:
+  port: 8123
+  servlet:
+    context-path: /api
+spring:
+  application:
+    name: tutu-backend
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://localhost:3306/tutu
+    username: root
+    password: 39784560
+mybatis-plus:
+  configuration:
+    map-underscore-to-camel-case: false
+    # 配置mybatis-plus日志
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+    # 配置逻辑删除
+  global-config:
+    db-config:
+      # 逻辑删除字段
+      logic-delete-field: isDelete
+      # 逻辑删除字段的值
+      logic-delete-value: 1
+      # 逻辑未删除字段的值
+      logic-not-delete-value: 0
+knife4j:
+  enable: true
+  openapi:
+    title: 接口文档
+    group:
+      default:
+        group-name:
+        api-rule: package
+        api-rule-resources:
+          - com.alioth.tutubackend.controller
