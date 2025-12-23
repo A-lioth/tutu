@@ -1,15 +1,20 @@
 package com.alioth.tutubackend.service.impl;
 
 import cn.hutool.core.util.StrUtil;
-import com.alioth.tutubackend.exception.BusinessException;
+import com.alioth.tutubackend.constant.UserConstant;
 import com.alioth.tutubackend.exception.ErrorCode;
+import com.alioth.tutubackend.exception.ThrowUtils;
 import com.alioth.tutubackend.mapper.UserMapper;
 import com.alioth.tutubackend.model.entity.User;
 import com.alioth.tutubackend.model.enums.UserRoleEnum;
+import com.alioth.tutubackend.model.vo.UserLoginVO;
 import com.alioth.tutubackend.service.UserService;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.util.DigestUtils;
+
+import javax.servlet.http.HttpServletRequest;
 
 /**
  * @author Alioth
@@ -31,27 +36,17 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
     @Override
     public long userRegister(String userAccount, String userPassword, String checkPassword) {
         // * 检验参数
-        if (StrUtil.hasBlank(userAccount, userPassword, checkPassword)) {
-            throw new BusinessException(ErrorCode.PARAMS_ERROR, "参数错误");
-        }
-        if (userAccount.length() < 4) {
-            throw new BusinessException(ErrorCode.PARAMS_ERROR, "用户账户过短");
-        }
-        if (userPassword.length() < 8 || checkPassword.length() < 8) {
-            throw new BusinessException(ErrorCode.PARAMS_ERROR, "用户密码过短");
-        }
-        if (!userPassword.equals(checkPassword)) {
-            throw new BusinessException(ErrorCode.PARAMS_ERROR, "两次输入的密码不一致");
-        }
+        ThrowUtils.throwIf(StrUtil.hasBlank(userAccount, userPassword, checkPassword), ErrorCode.PARAMS_ERROR, "参数错误");
+        ThrowUtils.throwIf(userAccount.length() < 4, ErrorCode.PARAMS_ERROR, "用户账户过短");
+        ThrowUtils.throwIf(userPassword.length() < 8, ErrorCode.PARAMS_ERROR, "用户密码过短");
+        ThrowUtils.throwIf(!userPassword.equals(checkPassword), ErrorCode.PARAMS_ERROR, "两次输入的密码不一致");
+        // * 加密密码
+        String encryptPassword = getEncryptPassword(userPassword);
         // * 是否重复
         Long count = lambdaQuery()
                 .eq(User::getUserAccount, userAccount)
                 .count();
-        if (count > 0) {
-            throw new BusinessException(ErrorCode.PARAMS_ERROR, "用户已存在");
-        }
-        // * 加密密码
-        String encryptPassword = getEncryptPassword(userPassword);
+        ThrowUtils.throwIf(count > 0, ErrorCode.PARAMS_ERROR, "用户已存在");
         // * 保存用户
         User user = new User();
         user.setUserAccount(userAccount);
@@ -59,10 +54,50 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
         user.setUserName("");
         user.setUserRole(UserRoleEnum.USER.getValue());
         boolean saveResult = save(user);
-        if (!saveResult) {
-            throw new BusinessException(ErrorCode.SYSTEM_ERROR, "注册失败");
-        }
+        ThrowUtils.throwIf(!saveResult, ErrorCode.SYSTEM_ERROR, "保存用户失败");
         return user.getId();
+    }
+
+    /**
+     * 用户登录
+     *
+     * @param userAccount  用户账户
+     * @param userPassword 用户密码
+     * @param request      请求
+     * @return 脱敏后的用户信息
+     */
+    @Override
+    public UserLoginVO userLogin(String userAccount, String userPassword, HttpServletRequest request) {
+        // * 检验参数
+        ThrowUtils.throwIf(StrUtil.hasBlank(userAccount, userPassword), ErrorCode.PARAMS_ERROR, "参数错误");
+        ThrowUtils.throwIf(userAccount.length() < 4, ErrorCode.PARAMS_ERROR, "账户错误");
+        ThrowUtils.throwIf(userPassword.length() < 8, ErrorCode.PARAMS_ERROR, "密码错误");
+        // * 加密密码
+        String encryptPassword = getEncryptPassword(userPassword);
+        // * 是否存在
+        User user = lambdaQuery()
+                .eq(User::getUserAccount, userAccount)
+                .eq(User::getUserPassword, encryptPassword)
+                .one();
+        ThrowUtils.throwIf(user == null, ErrorCode.PARAMS_ERROR, "用户不存在或密码错误");
+        // * 保存用户的登录态
+        request.getSession().setAttribute(UserConstant.USER_LOGIN_STATE, user);
+        return getUserLoginVO(user);
+    }
+
+    /**
+     * 获取脱敏后的用户信息
+     *
+     * @param user 用户信息
+     * @return 脱敏后的用户信息
+     */
+    @Override
+    public UserLoginVO getUserLoginVO(User user) {
+        // * 登录用户是否为空
+        ThrowUtils.throwIf(user == null, ErrorCode.NOT_FOUND_ERROR);
+        UserLoginVO userLoginVO = new UserLoginVO();
+        BeanUtils.copyProperties(user, userLoginVO);
+        return userLoginVO;
     }
 
     /**
