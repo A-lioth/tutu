@@ -9,8 +9,8 @@ import lombok.Getter;
 @Getter
 public enum UserRoleEnum {
 
-    USER("user", "普通用户"),
-    ADMIN("admin", "管理员");
+    USER("user", "user"),
+    ADMIN("admin", "admin");
 
     private final String label;
     private final String value;
@@ -22,11 +22,10 @@ public enum UserRoleEnum {
 
     /**
      * 根据 value 获取枚举
-     *
-     * @param value 枚举值的 value
+     * @param value 枚举值的值
      * @return 枚举值
      */
-    public static UserRoleEnum getValueByLabel(String value) {
+    public static UserRoleEnum getEnumByValue(String value) {
         if (ObjectUtil.isEmpty(value)) {
             return null;
         }
