@@ -82,7 +82,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
         ThrowUtils.throwIf(user == null, ErrorCode.PARAMS_ERROR, "用户不存在或密码错误");
         // * 保存用户的登录态
         request.getSession().setAttribute(UserConstant.USER_LOGIN_STATE, user);
-        return getUserLoginVO(user);
+        return getLoginUserVO(user);
     }
 
     /**
@@ -92,7 +92,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
      * @return 脱敏后的用户信息
      */
     @Override
-    public UserLoginVO getUserLoginVO(User user) {
+    public UserLoginVO getLoginUserVO(User user) {
         // * 登录用户是否为空
         ThrowUtils.throwIf(user == null, ErrorCode.NOT_FOUND_ERROR);
         UserLoginVO userLoginVO = new UserLoginVO();
@@ -111,6 +111,39 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
         // * 加盐
         final String SALT = "tutu";
         return DigestUtils.md5DigestAsHex((userPassword + SALT).getBytes());
+    }
+
+    /**
+     * 获取当前登录用户
+     *
+     * @param request 请求
+     * @return 当前登录用户信息
+     */
+    @Override
+    public User getLoginUser(HttpServletRequest request) {
+        User currentUser = (User) request.getSession().getAttribute(UserConstant.USER_LOGIN_STATE);
+        // * 用户是否登录
+        ThrowUtils.throwIf(currentUser == null || currentUser.getId() == null, ErrorCode.NOT_LOGIN_ERROR);
+        // * 获取当前用户信息
+        currentUser = this.getById(currentUser.getId());
+        ThrowUtils.throwIf(currentUser == null, ErrorCode.NOT_LOGIN_ERROR);
+        return currentUser;
+    }
+
+    /**
+     * 用户登出
+     *
+     * @param request 请求
+     * @return 登出结果
+     */
+    @Override
+    public boolean userLogout(HttpServletRequest request) {
+        User currentUser = (User) request.getSession().getAttribute(UserConstant.USER_LOGIN_STATE);
+        // * 用户是否登录
+        ThrowUtils.throwIf(currentUser == null || currentUser.getId() == null, ErrorCode.NOT_LOGIN_ERROR);
+        // * 移除登录态
+        request.getSession().removeAttribute(UserConstant.USER_LOGIN_STATE);
+        return true;
     }
 }
 

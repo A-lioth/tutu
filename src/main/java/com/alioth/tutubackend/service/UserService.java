@@ -39,7 +39,7 @@ public interface UserService extends IService<User> {
      * @param user 用户信息
      * @return 脱敏后的用户信息
      */
-    UserLoginVO getUserLoginVO(User user);
+    UserLoginVO getLoginUserVO(User user);
 
     /**
      * 获取加密密码
@@ -48,4 +48,20 @@ public interface UserService extends IService<User> {
      * @return 加密后的密码
      */
     String getEncryptPassword(String password);
+
+    /**
+     * 获取当前登录用户
+     *
+     * @param request 请求
+     * @return 当前登录用户信息
+     */
+    User getLoginUser(HttpServletRequest request);
+
+    /**
+     * 用户登出
+     *
+     * @param request 请求
+     * @return 登出结果
+     */
+    boolean userLogout(HttpServletRequest request);
 }
