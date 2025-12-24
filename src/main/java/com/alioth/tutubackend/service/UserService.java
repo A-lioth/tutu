@@ -1,10 +1,16 @@
 package com.alioth.tutubackend.service;
 
+import com.alioth.tutubackend.model.dto.user.UserAddRequest;
+import com.alioth.tutubackend.model.dto.user.UserQueryRequest;
 import com.alioth.tutubackend.model.entity.User;
 import com.alioth.tutubackend.model.vo.UserLoginVO;
+import com.alioth.tutubackend.model.vo.UserVO;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.IService;
 
 import javax.servlet.http.HttpServletRequest;
+import java.util.List;
 
 /**
  * @author Alioth
@@ -34,12 +40,28 @@ public interface UserService extends IService<User> {
     UserLoginVO userLogin(String userAccount, String userPassword, HttpServletRequest request);
 
     /**
-     * 获取脱敏后的用户信息
+     * 获取脱敏后的登录用户信息
      *
      * @param user 用户信息
      * @return 脱敏后的用户信息
      */
     UserLoginVO getLoginUserVO(User user);
+
+    /**
+     * 获取脱敏后的用户信息
+     *
+     * @param user 用户信息
+     * @return 脱敏后的用户信息
+     */
+    UserVO getUserVO(User user);
+
+    /**
+     * 获取脱敏后的用户信息列表
+     *
+     * @param userList 用户信息列表
+     * @return 脱敏后的用户信息列表
+     */
+    List<UserVO> getUserVOList(List<User> userList);
 
     /**
      * 获取加密密码
@@ -64,4 +86,22 @@ public interface UserService extends IService<User> {
      * @return 登出结果
      */
     boolean userLogout(HttpServletRequest request);
+
+    /**
+     * 添加用户
+     *
+     * @param userAddRequest 用户添加请求
+     * @return 新用户 id
+     */
+    long addUser(UserAddRequest userAddRequest);
+
+    /**
+     * 获取查询条件
+     *
+     * @param userQueryRequest 用户查询请求
+     * @return 查询条件
+     */
+    QueryWrapper<User> getQueryWrapper(UserQueryRequest userQueryRequest);
+
+    Page<UserVO> listUserVOByPage(Page<User> userPage);
 }

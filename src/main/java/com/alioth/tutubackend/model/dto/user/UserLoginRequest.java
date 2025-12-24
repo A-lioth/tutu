@@ -1,4 +1,4 @@
-package com.alioth.tutubackend.model.dto;
+package com.alioth.tutubackend.model.dto.user;
 
 import lombok.Data;
 

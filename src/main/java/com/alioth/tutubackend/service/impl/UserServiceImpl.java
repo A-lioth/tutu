@@ -1,20 +1,30 @@
 package com.alioth.tutubackend.service.impl;
 
+import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.util.ObjUtil;
 import cn.hutool.core.util.StrUtil;
 import com.alioth.tutubackend.constant.UserConstant;
+import com.alioth.tutubackend.exception.BusinessException;
 import com.alioth.tutubackend.exception.ErrorCode;
 import com.alioth.tutubackend.exception.ThrowUtils;
 import com.alioth.tutubackend.mapper.UserMapper;
+import com.alioth.tutubackend.model.dto.user.UserAddRequest;
+import com.alioth.tutubackend.model.dto.user.UserQueryRequest;
 import com.alioth.tutubackend.model.entity.User;
 import com.alioth.tutubackend.model.enums.UserRoleEnum;
 import com.alioth.tutubackend.model.vo.UserLoginVO;
+import com.alioth.tutubackend.model.vo.UserVO;
 import com.alioth.tutubackend.service.UserService;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.util.DigestUtils;
 
 import javax.servlet.http.HttpServletRequest;
+import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * @author Alioth
@@ -101,6 +111,32 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
     }
 
     /**
+     * 获取脱敏后的用户信息
+     *
+     * @param user 用户信息
+     * @return 脱敏后的用户信息
+     */
+    @Override
+    public UserVO getUserVO(User user) {
+        ThrowUtils.throwIf(user == null, ErrorCode.NOT_FOUND_ERROR);
+        UserVO userVO = new UserVO();
+        BeanUtils.copyProperties(user, userVO);
+        return userVO;
+    }
+
+    /**
+     * 获取脱敏后的用户信息列表
+     *
+     * @param userList 用户信息列表
+     * @return 脱敏后的用户信息
+     */
+    @Override
+    public List<UserVO> getUserVOList(List<User> userList) {
+        ThrowUtils.throwIf(CollUtil.isEmpty(userList), ErrorCode.NOT_FOUND_ERROR);
+        return userList.stream().map(this::getUserVO).collect(Collectors.toList());
+    }
+
+    /**
      * 获取加密密码
      *
      * @param userPassword 密码
@@ -125,7 +161,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
         // * 用户是否登录
         ThrowUtils.throwIf(currentUser == null || currentUser.getId() == null, ErrorCode.NOT_LOGIN_ERROR);
         // * 获取当前用户信息
-        currentUser = this.getById(currentUser.getId());
+        currentUser = getById(currentUser.getId());
         ThrowUtils.throwIf(currentUser == null, ErrorCode.NOT_LOGIN_ERROR);
         return currentUser;
     }
@@ -144,6 +180,49 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
         // * 移除登录态
         request.getSession().removeAttribute(UserConstant.USER_LOGIN_STATE);
         return true;
+    }
+
+    @Override
+    public long addUser(UserAddRequest userAddRequest) {
+        User user = new User();
+        BeanUtils.copyProperties(userAddRequest, user);
+        // * 设置默认密码
+        final String DEFAULT_USER_PASSWORD = "12345678";
+        user.setUserPassword(getEncryptPassword(DEFAULT_USER_PASSWORD));
+        // * 保存用户
+        boolean result = save(user);
+        ThrowUtils.throwIf(!result, ErrorCode.OPERATION_ERROR, "用户添加失败");
+        return user.getId();
+    }
+
+    @Override
+    public QueryWrapper<User> getQueryWrapper(UserQueryRequest userQueryRequest) {
+        if (userQueryRequest == null) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "请求参数为空");
+        }
+        Long id = userQueryRequest.getId();
+        String userAccount = userQueryRequest.getUserAccount();
+        String userName = userQueryRequest.getUserName();
+        String userProfile = userQueryRequest.getUserProfile();
+        String userRole = userQueryRequest.getUserRole();
+        String sortField = userQueryRequest.getSortField();
+        String sortOrder = userQueryRequest.getSortOrder();
+        QueryWrapper<User> queryWrapper = new QueryWrapper<>();
+        queryWrapper.eq(ObjUtil.isNotNull(id), "id", id);
+        queryWrapper.eq(StrUtil.isNotBlank(userRole), "userRole", userRole);
+        queryWrapper.like(StrUtil.isNotBlank(userAccount), "userAccount", userAccount);
+        queryWrapper.like(StrUtil.isNotBlank(userName), "userName", userName);
+        queryWrapper.like(StrUtil.isNotBlank(userProfile), "userProfile", userProfile);
+        queryWrapper.orderBy(StrUtil.isNotEmpty(sortField), sortOrder.equals("ascend"), sortField);
+        return queryWrapper;
+    }
+
+    @Override
+    public Page<UserVO> listUserVOByPage(Page<User> userPage) {
+        Page<UserVO> userVOPage = new Page<>(userPage.getCurrent(), userPage.getSize(), userPage.getTotal());
+        List<UserVO> userVOList = getUserVOList(userPage.getRecords());
+        userVOPage.setRecords(userVOList);
+        return userVOPage;
     }
 }
 
