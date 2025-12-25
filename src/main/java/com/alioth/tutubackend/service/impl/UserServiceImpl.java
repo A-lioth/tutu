@@ -217,12 +217,29 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
         return queryWrapper;
     }
 
+    /**
+     * 分页获取用户列表
+     *
+     * @param userPage 分页参数
+     * @return 分页用户信息
+     */
     @Override
     public Page<UserVO> listUserVOByPage(Page<User> userPage) {
         Page<UserVO> userVOPage = new Page<>(userPage.getCurrent(), userPage.getSize(), userPage.getTotal());
         List<UserVO> userVOList = getUserVOList(userPage.getRecords());
         userVOPage.setRecords(userVOList);
         return userVOPage;
+    }
+
+    /**
+     * 是否为管理员
+     *
+     * @param user 用户信息
+     * @return 是否为管理员
+     */
+    @Override
+    public boolean isAdmin(User user) {
+        return user != null && UserRoleEnum.ADMIN.getValue().equals(user.getUserRole());
     }
 }
 

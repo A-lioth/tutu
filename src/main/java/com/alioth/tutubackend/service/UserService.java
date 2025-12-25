@@ -103,5 +103,19 @@ public interface UserService extends IService<User> {
      */
     QueryWrapper<User> getQueryWrapper(UserQueryRequest userQueryRequest);
 
+    /**
+     * 分页获取用户列表
+     *
+     * @param userPage 分页参数
+     * @return 用户列表
+     */
     Page<UserVO> listUserVOByPage(Page<User> userPage);
+
+    /**
+     * 是否为管理员
+     *
+     * @param user 用户信息
+     * @return 是否为管理员
+     */
+    boolean isAdmin(User user);
 }

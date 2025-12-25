@@ -1,9 +1,11 @@
 package com.alioth.tutubackend.service;
 
+import com.alioth.tutubackend.model.dto.picture.PictureQueryRequest;
 import com.alioth.tutubackend.model.dto.picture.PictureUploadRequest;
 import com.alioth.tutubackend.model.entity.Picture;
 import com.alioth.tutubackend.model.entity.User;
 import com.alioth.tutubackend.model.vo.PictureVO;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.IService;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -24,4 +26,12 @@ public interface PictureService extends IService<Picture> {
     PictureVO uploadPicture(MultipartFile multipartFile,
                             PictureUploadRequest pictureUploadRequest,
                             User loginUser);
+
+    /**
+     * 获取查询条件
+     *
+     * @param pictureQueryRequest 图片查询请求
+     * @return 查询条件
+     */
+    QueryWrapper<Picture> getQueryWrapper(PictureQueryRequest pictureQueryRequest);
 }
