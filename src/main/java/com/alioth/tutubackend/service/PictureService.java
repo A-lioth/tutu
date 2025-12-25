@@ -6,6 +6,7 @@ import com.alioth.tutubackend.model.entity.Picture;
 import com.alioth.tutubackend.model.entity.User;
 import com.alioth.tutubackend.model.vo.PictureVO;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.IService;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -34,4 +35,27 @@ public interface PictureService extends IService<Picture> {
      * @return 查询条件
      */
     QueryWrapper<Picture> getQueryWrapper(PictureQueryRequest pictureQueryRequest);
+
+    /**
+     * 获取图片信息包装类
+     *
+     * @param picture 图片信息
+     * @return 图片信息包装类
+     */
+    public PictureVO getPictureVO(Picture picture);
+
+    /**
+     * 分页获取图片列表包装类
+     *
+     * @param picturePage 图片列表
+     * @return 图片列表包装类
+     */
+    Page<PictureVO> getPictureVOPage(Page<Picture> picturePage);
+
+    /**
+     * 校验图片信息
+     *
+     * @param picture 图片信息
+     */
+    void validPicture(Picture picture);
 }
