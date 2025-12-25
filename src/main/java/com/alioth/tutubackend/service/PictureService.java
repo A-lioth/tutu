@@ -1,13 +1,27 @@
 package com.alioth.tutubackend.service;
 
+import com.alioth.tutubackend.model.dto.picture.PictureUploadRequest;
 import com.alioth.tutubackend.model.entity.Picture;
+import com.alioth.tutubackend.model.entity.User;
+import com.alioth.tutubackend.model.vo.PictureVO;
 import com.baomidou.mybatisplus.extension.service.IService;
+import org.springframework.web.multipart.MultipartFile;
 
 /**
-* @author Alioth
-* @description 针对表【picture(图片)】的数据库操作Service
-* @createDate 2025-12-24 22:25:05
-*/
+ * @author Alioth
+ * @description 针对表【picture(图片)】的数据库操作Service
+ * @createDate 2025-12-24 22:25:05
+ */
 public interface PictureService extends IService<Picture> {
-
+    /**
+     * 上传图片
+     *
+     * @param multipartFile        文件
+     * @param pictureUploadRequest 图片上传请求
+     * @param loginUser            登录用户
+     * @return 图片信息
+     */
+    PictureVO uploadPicture(MultipartFile multipartFile,
+                            PictureUploadRequest pictureUploadRequest,
+                            User loginUser);
 }
