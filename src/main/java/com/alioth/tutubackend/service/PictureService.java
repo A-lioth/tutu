@@ -1,6 +1,7 @@
 package com.alioth.tutubackend.service;
 
 import com.alioth.tutubackend.model.dto.picture.PictureQueryRequest;
+import com.alioth.tutubackend.model.dto.picture.PictureReviewRequest;
 import com.alioth.tutubackend.model.dto.picture.PictureUploadRequest;
 import com.alioth.tutubackend.model.entity.Picture;
 import com.alioth.tutubackend.model.entity.User;
@@ -58,4 +59,12 @@ public interface PictureService extends IService<Picture> {
      * @param picture 图片信息
      */
     void validPicture(Picture picture);
+
+    /**
+     * 图片审核
+     *
+     * @param pictureReviewRequest 图片审核请求
+     * @param loginUser            登录用户
+     */
+    void pictureReview(PictureReviewRequest pictureReviewRequest, User loginUser);
 }

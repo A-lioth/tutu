@@ -9,15 +9,18 @@ import com.alioth.tutubackend.manager.FileManager;
 import com.alioth.tutubackend.mapper.PictureMapper;
 import com.alioth.tutubackend.model.dto.file.UploadPictureResult;
 import com.alioth.tutubackend.model.dto.picture.PictureQueryRequest;
+import com.alioth.tutubackend.model.dto.picture.PictureReviewRequest;
 import com.alioth.tutubackend.model.dto.picture.PictureUploadRequest;
 import com.alioth.tutubackend.model.entity.Picture;
 import com.alioth.tutubackend.model.entity.User;
+import com.alioth.tutubackend.model.enums.PictureReviewStatusEnum;
 import com.alioth.tutubackend.model.vo.PictureVO;
 import com.alioth.tutubackend.service.PictureService;
 import com.alioth.tutubackend.service.UserService;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -206,5 +209,36 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
         ThrowUtils.throwIf(StrUtil.isNotBlank(url) && url.length() > 1024, ErrorCode.PARAMS_ERROR, "url 过长");
         // * 修改数据时，introduction 不能为空，有参数则校验
         ThrowUtils.throwIf(StrUtil.isNotBlank(introduction) && introduction.length() > 800, ErrorCode.PARAMS_ERROR, "简介过长");
+    }
+
+    /**
+     * 图片审核
+     *
+     * @param pictureReviewRequest 图片审核请求
+     * @param loginUser            登录用户
+     */
+    @Override
+    public void pictureReview(PictureReviewRequest pictureReviewRequest, User loginUser) {
+        // * 校验参数
+        ThrowUtils.throwIf(pictureReviewRequest == null, ErrorCode.PARAMS_ERROR);
+        Long id = pictureReviewRequest.getId();
+        ThrowUtils.throwIf(id == null || id <= 0, ErrorCode.PARAMS_ERROR);
+        Integer reviewStatus = pictureReviewRequest.getReviewStatus();
+        // * 校验审核状态
+        PictureReviewStatusEnum reviewStatusEnum = PictureReviewStatusEnum.getEnumByValue(reviewStatus);
+        ThrowUtils.throwIf(reviewStatusEnum == null, ErrorCode.PARAMS_ERROR, "审核状态错误");
+        ThrowUtils.throwIf(reviewStatusEnum.equals(PictureReviewStatusEnum.REVIEWING), ErrorCode.OPERATION_ERROR, "图片正在审核中");
+        // * 判断图片是否存在
+        Picture oldPicture = this.getById(id);
+        ThrowUtils.throwIf(oldPicture == null, ErrorCode.NOT_FOUND_ERROR);
+        // * 校验审核状态
+        ThrowUtils.throwIf(oldPicture.getReviewStatus().equals(reviewStatus), ErrorCode.OPERATION_ERROR, "图片审核状态未更新");
+        // * 更新图片信息
+        Picture updatePicture = new Picture();
+        BeanUtils.copyProperties(pictureReviewRequest, updatePicture);
+        updatePicture.setReviewTime(new Date());
+        updatePicture.setReviewerId(loginUser.getId());
+        boolean result = updateById(updatePicture);
+        ThrowUtils.throwIf(!result, ErrorCode.OPERATION_ERROR, "图片审核失败");
     }
 }

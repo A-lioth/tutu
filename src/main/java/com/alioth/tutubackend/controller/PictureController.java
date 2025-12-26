@@ -9,10 +9,7 @@ import com.alioth.tutubackend.constant.UserConstant;
 import com.alioth.tutubackend.exception.BusinessException;
 import com.alioth.tutubackend.exception.ErrorCode;
 import com.alioth.tutubackend.exception.ThrowUtils;
-import com.alioth.tutubackend.model.dto.picture.PictureEditRequest;
-import com.alioth.tutubackend.model.dto.picture.PictureQueryRequest;
-import com.alioth.tutubackend.model.dto.picture.PictureUpdateRequest;
-import com.alioth.tutubackend.model.dto.picture.PictureUploadRequest;
+import com.alioth.tutubackend.model.dto.picture.*;
 import com.alioth.tutubackend.model.entity.Picture;
 import com.alioth.tutubackend.model.entity.User;
 import com.alioth.tutubackend.model.vo.PictureTagCategory;
@@ -208,6 +205,22 @@ public class PictureController {
         // 操作数据库
         boolean result = pictureService.updateById(picture);
         ThrowUtils.throwIf(!result, ErrorCode.OPERATION_ERROR);
+        return ResultUtils.success(true);
+    }
+
+    /**
+     * 图片审核（仅管理员）
+     *
+     * @param pictureReviewRequest 图片审核请求
+     * @return 审核结果
+     */
+    @PostMapping("/review")
+    @AuthCheck(mustRole = UserConstant.ADMIN_ROLE)
+    public BaseResponse<Boolean> pictureReview(@RequestBody PictureReviewRequest pictureReviewRequest, HttpServletRequest request) {
+        ThrowUtils.throwIf(pictureReviewRequest == null || pictureReviewRequest.getId() <= 0, ErrorCode.PARAMS_ERROR);
+        // 获取用户信息
+        User loginUser = userService.getLoginUser(request);
+        pictureService.pictureReview(pictureReviewRequest, loginUser);
         return ResultUtils.success(true);
     }
 
