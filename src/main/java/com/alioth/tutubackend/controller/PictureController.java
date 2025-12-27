@@ -12,6 +12,7 @@ import com.alioth.tutubackend.exception.ThrowUtils;
 import com.alioth.tutubackend.model.dto.picture.*;
 import com.alioth.tutubackend.model.entity.Picture;
 import com.alioth.tutubackend.model.entity.User;
+import com.alioth.tutubackend.model.enums.PictureReviewStatusEnum;
 import com.alioth.tutubackend.model.vo.PictureTagCategory;
 import com.alioth.tutubackend.model.vo.PictureVO;
 import com.alioth.tutubackend.service.PictureService;
@@ -78,11 +79,12 @@ public class PictureController {
      * 修改图片（仅管理员）
      *
      * @param pictureUpdateRequest 修改请求
+     * @param request              请求
      * @return 修改结果
      */
     @PostMapping("/update")
     @AuthCheck(mustRole = UserConstant.ADMIN_ROLE)
-    public BaseResponse<Boolean> updatePicture(@RequestBody PictureUpdateRequest pictureUpdateRequest) {
+    public BaseResponse<Boolean> updatePicture(@RequestBody PictureUpdateRequest pictureUpdateRequest, HttpServletRequest request) {
         ThrowUtils.throwIf(pictureUpdateRequest == null || pictureUpdateRequest.getId() <= 0, ErrorCode.PARAMS_ERROR);
         // * 将 pictureUpdateRequest 转换成 Picture
         Picture picture = new Picture();
@@ -98,6 +100,9 @@ public class PictureController {
         if (!oldPicture.getUserId().equals(picture.getUserId())) {
             throw new BusinessException(ErrorCode.NO_AUTH_ERROR);
         }
+        // * 增加审核状态
+        User loginUser = userService.getLoginUser(request);
+        pictureService.fillReviewParams(oldPicture, loginUser);
         boolean result = pictureService.updateById(picture);
         ThrowUtils.throwIf(!result, ErrorCode.OPERATION_ERROR);
         return ResultUtils.success(true);
@@ -167,6 +172,8 @@ public class PictureController {
         long size = pictureQueryRequest.getPageSize();
         // 限制爬虫
         ThrowUtils.throwIf(size > 20, ErrorCode.PARAMS_ERROR);
+        // * 普通用户默认显示通过审核的图片
+        pictureQueryRequest.setReviewStatus(PictureReviewStatusEnum.PASS.getValue());
         // 查询数据库
         Page<Picture> picturePage = pictureService.page(new Page<>(current, size),
                 pictureService.getQueryWrapper(pictureQueryRequest));
@@ -202,6 +209,8 @@ public class PictureController {
         if (!oldPicture.getUserId().equals(loginUser.getId()) && !userService.isAdmin(loginUser)) {
             throw new BusinessException(ErrorCode.NO_AUTH_ERROR);
         }
+        // * 增加审核状态
+        pictureService.fillReviewParams(picture, loginUser);
         // 操作数据库
         boolean result = pictureService.updateById(picture);
         ThrowUtils.throwIf(!result, ErrorCode.OPERATION_ERROR);

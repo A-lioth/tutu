@@ -67,7 +67,7 @@ public class UserController {
      * @param request 登录请求
      * @return 当前登录用户信息
      */
-    @GetMapping("/current")
+    @GetMapping("/get/login")
     public BaseResponse<UserLoginVO> getLoginUser(HttpServletRequest request) {
         User user = userService.getLoginUser(request);
         UserLoginVO userLoginVO = userService.getLoginUserVO(user);
