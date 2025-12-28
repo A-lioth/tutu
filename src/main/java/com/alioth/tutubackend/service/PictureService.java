@@ -9,7 +9,6 @@ import com.alioth.tutubackend.model.vo.PictureVO;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.IService;
-import org.springframework.web.multipart.MultipartFile;
 
 /**
  * @author Alioth
@@ -20,12 +19,12 @@ public interface PictureService extends IService<Picture> {
     /**
      * 上传图片
      *
-     * @param multipartFile        文件
+     * @param inputSource          文件对象
      * @param pictureUploadRequest 图片上传请求
      * @param loginUser            登录用户
      * @return 图片信息
      */
-    PictureVO uploadPicture(MultipartFile multipartFile,
+    PictureVO uploadPicture(Object inputSource,
                             PictureUploadRequest pictureUploadRequest,
                             User loginUser);
 

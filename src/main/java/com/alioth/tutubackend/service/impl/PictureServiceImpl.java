@@ -3,9 +3,12 @@ package com.alioth.tutubackend.service.impl;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjUtil;
 import cn.hutool.core.util.StrUtil;
+import com.alioth.tutubackend.exception.BusinessException;
 import com.alioth.tutubackend.exception.ErrorCode;
 import com.alioth.tutubackend.exception.ThrowUtils;
-import com.alioth.tutubackend.manager.FileManager;
+import com.alioth.tutubackend.manager.upload.FilePictureUpload;
+import com.alioth.tutubackend.manager.upload.PictureUploadTemplate;
+import com.alioth.tutubackend.manager.upload.UrlPictureUpload;
 import com.alioth.tutubackend.mapper.PictureMapper;
 import com.alioth.tutubackend.model.dto.file.UploadPictureResult;
 import com.alioth.tutubackend.model.dto.picture.PictureQueryRequest;
@@ -22,7 +25,6 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
-import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
 import java.util.Date;
@@ -41,20 +43,22 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
         implements PictureService {
 
     @Resource
-    private FileManager fileManager;
-    @Resource
     private UserService userService;
+    @Resource
+    private FilePictureUpload filePictureUpload;
+    @Resource
+    private UrlPictureUpload urlPictureUpload;
 
     /**
      * 上传图片
      *
-     * @param multipartFile        文件
+     * @param inputSource          文件
      * @param pictureUploadRequest 上传参数
      * @param loginUser            登录用户
      * @return 上传结果
      */
     @Override
-    public PictureVO uploadPicture(MultipartFile multipartFile, PictureUploadRequest pictureUploadRequest, User loginUser) {
+    public PictureVO uploadPicture(Object inputSource, PictureUploadRequest pictureUploadRequest, User loginUser) {
         // * 校验参数
         ThrowUtils.throwIf(loginUser == null, ErrorCode.NO_AUTH_ERROR);
         // * 判断新增还是更新
@@ -66,10 +70,18 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
             // * 仅本人或管理员可修改
             ThrowUtils.throwIf(!loginUser.getId().equals(oldPicture.getUserId()) && !userService.isAdmin(loginUser), ErrorCode.NO_AUTH_ERROR);
         }
+        if (inputSource == null) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "图片为空");
+        }
         // * 上传图片（根据用户 id 划分目录）
         String uploadPathPrefix = String.format("public/%s", loginUser.getId());
-        UploadPictureResult uploadPictureResult = fileManager.uploadPicture(multipartFile, uploadPathPrefix);
-        // * 构造 picture 对象
+        // * 根据 inputSource 类型区分上传方式
+        PictureUploadTemplate pictureUploadTemplate = filePictureUpload;
+        if (inputSource instanceof String) {
+            pictureUploadTemplate = urlPictureUpload;
+        }
+        UploadPictureResult uploadPictureResult = pictureUploadTemplate.uploadPicture(inputSource, uploadPathPrefix);
+        // * 构造图片信息
         Picture picture = new Picture();
         picture.setUrl(uploadPictureResult.getUrl());
         picture.setName(uploadPictureResult.getPicName());
