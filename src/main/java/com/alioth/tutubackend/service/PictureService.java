@@ -2,6 +2,7 @@ package com.alioth.tutubackend.service;
 
 import com.alioth.tutubackend.model.dto.picture.PictureQueryRequest;
 import com.alioth.tutubackend.model.dto.picture.PictureReviewRequest;
+import com.alioth.tutubackend.model.dto.picture.PictureUploadByBatchRequest;
 import com.alioth.tutubackend.model.dto.picture.PictureUploadRequest;
 import com.alioth.tutubackend.model.entity.Picture;
 import com.alioth.tutubackend.model.entity.User;
@@ -74,4 +75,13 @@ public interface PictureService extends IService<Picture> {
      * @param loginUser 登录用户
      */
     void fillReviewParams(Picture picture, User loginUser);
+
+    /**
+     * 批量抓取和创建图片
+     *
+     * @param pictureUploadByBatchRequest 图片批量上传请求
+     * @param loginUser                   登录用户
+     * @return 成功创建的图片数
+     */
+    Integer uploadPictureByBatch(PictureUploadByBatchRequest pictureUploadByBatchRequest, User loginUser);
 }
