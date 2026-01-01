@@ -59,7 +59,13 @@ public abstract class PictureUploadTemplate {
             if (CollUtil.isNotEmpty(objectList)) {
                 // * 获取转换后的图片信息（如webp格式）
                 CIObject convertedCiObject = objectList.get(0);
-                return buildResult(originFilename, convertedCiObject);
+                // * 缩略图默认为压缩后的图片
+                CIObject thumbnailCiObject = convertedCiObject;
+                // * 有缩略图则使用缩略图
+                if (objectList.size() > 1) {
+                    thumbnailCiObject = objectList.get(1);
+                }
+                return buildResult(originFilename, convertedCiObject, thumbnailCiObject);
             }
             // * 5. 封装返回结果（如果没有处理结果，则使用原始图片信息）
             return buildResult(originFilename, file, uploadPath, imageInfo);
@@ -92,9 +98,10 @@ public abstract class PictureUploadTemplate {
      *
      * @param originFilename     原始文件名
      * @param compressedCiObject 压缩后的图片信息
+     * @param thumbnailCiObject  缩略图图片信息
      * @return 返回结果
      */
-    private UploadPictureResult buildResult(String originFilename, CIObject compressedCiObject) {
+    private UploadPictureResult buildResult(String originFilename, CIObject compressedCiObject, CIObject thumbnailCiObject) {
         UploadPictureResult uploadPictureResult = new UploadPictureResult();
         int picWidth = compressedCiObject.getWidth();
         int picHeight = compressedCiObject.getHeight();
@@ -104,9 +111,10 @@ public abstract class PictureUploadTemplate {
         uploadPictureResult.setPicHeight(picHeight);
         uploadPictureResult.setPicScale(picScale);
         uploadPictureResult.setPicFormat(compressedCiObject.getFormat());
-        uploadPictureResult.setPicSize(compressedCiObject.getSize().longValue());
         // 设置图片为压缩后的地址
         uploadPictureResult.setUrl(cosClientConfig.getHost() + "/" + compressedCiObject.getKey());
+        // 设置图片为缩略图地址
+        uploadPictureResult.setThumbnailUrl(cosClientConfig.getHost() + "/" + thumbnailCiObject.getKey());
         return uploadPictureResult;
     }
 
