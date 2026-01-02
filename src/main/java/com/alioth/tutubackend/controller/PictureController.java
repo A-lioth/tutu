@@ -104,6 +104,8 @@ public class PictureController {
         }
         boolean result = pictureService.removeById(id);
         ThrowUtils.throwIf(!result, ErrorCode.OPERATION_ERROR);
+        // * 清理图片文件
+        pictureService.clearPictureFile(picture);
         return ResultUtils.success(true);
     }
 

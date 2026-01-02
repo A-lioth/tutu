@@ -6,6 +6,7 @@ import cn.hutool.core.util.StrUtil;
 import com.alioth.tutubackend.exception.BusinessException;
 import com.alioth.tutubackend.exception.ErrorCode;
 import com.alioth.tutubackend.exception.ThrowUtils;
+import com.alioth.tutubackend.manager.CosManager;
 import com.alioth.tutubackend.manager.upload.FilePictureUpload;
 import com.alioth.tutubackend.manager.upload.PictureUploadTemplate;
 import com.alioth.tutubackend.manager.upload.UrlPictureUpload;
@@ -30,6 +31,7 @@ import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 import org.springframework.beans.BeanUtils;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
@@ -56,6 +58,8 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
     private FilePictureUpload filePictureUpload;
     @Resource
     private UrlPictureUpload urlPictureUpload;
+    @Resource
+    private CosManager cosManager;
 
     /**
      * 上传图片
@@ -113,6 +117,11 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
         // * 增加审核状态
         fillReviewParams(picture, loginUser);
         boolean result = saveOrUpdate(picture);
+        // * 更新则清理旧图片
+        if (pictureId != null) {
+            Picture oldPicture = getById(pictureId);
+            cosManager.deleteObject(oldPicture.getUrl());
+        }
         ThrowUtils.throwIf(!result, ErrorCode.OPERATION_ERROR, "上传图片失败");
         // * 封装返回结果
         return PictureVO.objToVo(picture);
@@ -367,5 +376,31 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
             }
         }
         return uploadCount;
+    }
+
+    /**
+     * 异步清理图片文件
+     *
+     * @param oldPicture 旧图片信息
+     */
+    @Async
+    @Override
+    public void clearPictureFile(Picture oldPicture) {
+        // 判断该图片是否被多条记录使用
+        String pictureUrl = oldPicture.getUrl();
+        long count = this.lambdaQuery()
+                .eq(Picture::getUrl, pictureUrl)
+                .count();
+        // 有不止一条记录用到了该图片，不清理
+        if (count > 1) {
+            return;
+        }
+        // FIXME 注意，这里的 url 包含了域名，实际上只要传 key 值（存储路径）就够了
+        cosManager.deleteObject(oldPicture.getUrl());
+        // 清理缩略图
+        String thumbnailUrl = oldPicture.getThumbnailUrl();
+        if (StrUtil.isNotBlank(thumbnailUrl)) {
+            cosManager.deleteObject(thumbnailUrl);
+        }
     }
 }
