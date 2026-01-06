@@ -8,12 +8,10 @@ import com.alioth.tutubackend.constant.UserConstant;
 import com.alioth.tutubackend.exception.BusinessException;
 import com.alioth.tutubackend.exception.ErrorCode;
 import com.alioth.tutubackend.exception.ThrowUtils;
-import com.alioth.tutubackend.model.dto.space.SpaceAddRequest;
-import com.alioth.tutubackend.model.dto.space.SpaceEditRequest;
-import com.alioth.tutubackend.model.dto.space.SpaceQueryRequest;
-import com.alioth.tutubackend.model.dto.space.SpaceUpdateRequest;
+import com.alioth.tutubackend.model.dto.space.*;
 import com.alioth.tutubackend.model.entity.Space;
 import com.alioth.tutubackend.model.entity.User;
+import com.alioth.tutubackend.model.enums.SpaceLevelEnum;
 import com.alioth.tutubackend.model.vo.SpaceVO;
 import com.alioth.tutubackend.service.SpaceService;
 import com.alioth.tutubackend.service.UserService;
@@ -23,7 +21,10 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
+import java.util.Arrays;
 import java.util.Date;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/space")
@@ -201,5 +202,22 @@ public class SpaceController {
         boolean result = spaceService.updateById(space);
         ThrowUtils.throwIf(!result, ErrorCode.OPERATION_ERROR);
         return ResultUtils.success(true);
+    }
+
+    /**
+     * 获取所有空间等级
+     *
+     * @return 所有空间等级
+     */
+    @GetMapping("/list/level")
+    public BaseResponse<List<SpaceLevel>> listSpaceLevel() {
+        List<SpaceLevel> spaceLevelList = Arrays.stream(SpaceLevelEnum.values()) // 获取所有枚举
+                .map(spaceLevelEnum -> new SpaceLevel(
+                        spaceLevelEnum.getValue(),
+                        spaceLevelEnum.getText(),
+                        spaceLevelEnum.getMaxCount(),
+                        spaceLevelEnum.getMaxSize()))
+                .collect(Collectors.toList());
+        return ResultUtils.success(spaceLevelList);
     }
 }

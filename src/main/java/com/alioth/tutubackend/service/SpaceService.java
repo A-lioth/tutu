@@ -39,7 +39,7 @@ public interface SpaceService extends IService<Space> {
      * @param space 空间信息
      * @return 空间信息包装类
      */
-    public SpaceVO getSpaceVO(Space space);
+    SpaceVO getSpaceVO(Space space);
 
     /**
      * 分页获取空间列表包装类

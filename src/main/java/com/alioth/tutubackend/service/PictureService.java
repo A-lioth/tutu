@@ -1,9 +1,6 @@
 package com.alioth.tutubackend.service;
 
-import com.alioth.tutubackend.model.dto.picture.PictureQueryRequest;
-import com.alioth.tutubackend.model.dto.picture.PictureReviewRequest;
-import com.alioth.tutubackend.model.dto.picture.PictureUploadByBatchRequest;
-import com.alioth.tutubackend.model.dto.picture.PictureUploadRequest;
+import com.alioth.tutubackend.model.dto.picture.*;
 import com.alioth.tutubackend.model.entity.Picture;
 import com.alioth.tutubackend.model.entity.User;
 import com.alioth.tutubackend.model.vo.PictureVO;
@@ -26,9 +23,23 @@ public interface PictureService extends IService<Picture> {
      * @param loginUser            登录用户
      * @return 图片信息
      */
-    PictureVO uploadPicture(Object inputSource,
-                            PictureUploadRequest pictureUploadRequest,
-                            User loginUser);
+    PictureVO uploadPicture(Object inputSource, PictureUploadRequest pictureUploadRequest, User loginUser);
+
+    /**
+     * 删除图片
+     *
+     * @param pictureId 图片 ID
+     * @param loginUser 登录用户
+     */
+    void deletePicture(long pictureId, User loginUser);
+
+    /**
+     * 编辑图片
+     *
+     * @param pictureEditRequest 图片编辑请求
+     * @param loginUser          登录用户
+     */
+    void editPicture(PictureEditRequest pictureEditRequest, User loginUser);
 
     /**
      * 获取查询条件
@@ -93,4 +104,12 @@ public interface PictureService extends IService<Picture> {
      */
     @Async
     void clearPictureFile(Picture oldPicture);
+
+    /**
+     * 检查图片权限
+     *
+     * @param loginUser 登录用户
+     * @param picture   图片信息
+     */
+    void checkPictureAuth(User loginUser, Picture picture);
 }
