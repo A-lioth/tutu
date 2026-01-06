@@ -1,7 +1,9 @@
 package com.alioth.tutubackend.service;
 
+import com.alioth.tutubackend.model.dto.space.SpaceAddRequest;
 import com.alioth.tutubackend.model.dto.space.SpaceQueryRequest;
 import com.alioth.tutubackend.model.entity.Space;
+import com.alioth.tutubackend.model.entity.User;
 import com.alioth.tutubackend.model.vo.SpaceVO;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -13,6 +15,16 @@ import com.baomidou.mybatisplus.extension.service.IService;
  * @createDate 2026-01-05 19:35:28
  */
 public interface SpaceService extends IService<Space> {
+
+    /**
+     * 创建空间
+     *
+     * @param spaceAddRequest 创建空间请求
+     * @param loginUser       登录用户
+     * @return 创建的空间 ID
+     */
+    long addSpace(SpaceAddRequest spaceAddRequest, User loginUser);
+
     /**
      * 获取查询条件
      *

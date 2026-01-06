@@ -6,6 +6,7 @@ import cn.hutool.core.util.StrUtil;
 import com.alioth.tutubackend.exception.ErrorCode;
 import com.alioth.tutubackend.exception.ThrowUtils;
 import com.alioth.tutubackend.mapper.SpaceMapper;
+import com.alioth.tutubackend.model.dto.space.SpaceAddRequest;
 import com.alioth.tutubackend.model.dto.space.SpaceQueryRequest;
 import com.alioth.tutubackend.model.entity.Space;
 import com.alioth.tutubackend.model.entity.User;
@@ -16,11 +17,14 @@ import com.alioth.tutubackend.service.UserService;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.support.TransactionTemplate;
 
 import javax.annotation.Resource;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -35,6 +39,48 @@ public class SpaceServiceImpl extends ServiceImpl<SpaceMapper, Space>
 
     @Resource
     private UserService userService;
+    @Resource
+    private TransactionTemplate transactionTemplate;
+
+    /**
+     * 创建空间
+     *
+     * @param spaceAddRequest 空间添加请求
+     * @param loginUser       登录用户
+     * @return 空间 ID
+     */
+    @Override
+    public long addSpace(SpaceAddRequest spaceAddRequest, User loginUser) {
+        Space space = new Space();
+        BeanUtils.copyProperties(spaceAddRequest, space);
+        if (StrUtil.isNotBlank(space.getSpaceName())) {
+            space.setSpaceName("默认空间");
+        }
+        if (space.getSpaceLevel() == null) {
+            space.setSpaceLevel(SpaceLevelEnum.COMMON.getValue());
+        }
+        // * 填充空间信息
+        fillSpaceBySpaceLevel(space);
+        // * 校验空间信息
+        validSpace(space, true);
+        // * 校验权限
+        Long userId = loginUser.getId();
+        space.setUserId(userId);
+        ThrowUtils.throwIf(SpaceLevelEnum.COMMON.getValue() != space.getSpaceLevel(), ErrorCode.NO_AUTH_ERROR, "无操作权限");
+        // * 加锁保证同一用户只能创建一个空间
+        String lock = String.valueOf(userId).intern();
+        synchronized (lock) {
+            Long newSpaceId = transactionTemplate.execute(status -> {
+                // * 判断是否已有空间
+                Space one = lambdaQuery().eq(Space::getUserId, userId).one();
+                ThrowUtils.throwIf(one != null, ErrorCode.OPERATION_ERROR, "用户已创建空间");
+                boolean result = save(space);
+                ThrowUtils.throwIf(!result, ErrorCode.SYSTEM_ERROR, "创建空间失败");
+                return space.getId();
+            });
+            return Optional.ofNullable(newSpaceId).orElse(-1L);
+        }
+    }
 
     /**
      * 获取查询条件
