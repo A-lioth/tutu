@@ -9,6 +9,8 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.IService;
 import org.springframework.scheduling.annotation.Async;
 
+import java.util.List;
+
 /**
  * @author Alioth
  * @description 针对表【picture(图片)】的数据库操作Service
@@ -112,4 +114,14 @@ public interface PictureService extends IService<Picture> {
      * @param picture   图片信息
      */
     void checkPictureAuth(User loginUser, Picture picture);
+
+    /**
+     * 根据颜色搜索图片
+     *
+     * @param spaceId   空间 ID
+     * @param picColor  图片颜色
+     * @param loginUser 登录用户
+     * @return 图片列表包装类
+     */
+    List<PictureVO> searchPictureByColor(Long spaceId, String picColor, User loginUser);
 }
