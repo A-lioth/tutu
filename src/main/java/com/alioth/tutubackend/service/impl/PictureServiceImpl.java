@@ -87,8 +87,8 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
             // * 校验权限
             ThrowUtils.throwIf(!loginUser.getId().equals(space.getUserId()), ErrorCode.NO_AUTH_ERROR, "没有空间权限");
             // * 校验空间额度
-            ThrowUtils.throwIf(space.getTotalCount() > space.getMaxCount(), ErrorCode.OPERATION_ERROR, "空间容量不足");
-            ThrowUtils.throwIf(space.getTotalSize() > space.getMaxSize(), ErrorCode.OPERATION_ERROR, "空间容量不足");
+            ThrowUtils.throwIf(space.getTotalCount() >= space.getMaxCount(), ErrorCode.OPERATION_ERROR, "空间容量不足");
+            ThrowUtils.throwIf(space.getTotalSize() >= space.getMaxSize(), ErrorCode.OPERATION_ERROR, "空间容量不足");
         }
         // * 判断新增还是更新
         Long pictureId = pictureUploadRequest != null ? pictureUploadRequest.getId() : null;

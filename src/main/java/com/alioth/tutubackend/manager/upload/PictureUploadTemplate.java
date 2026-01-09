@@ -108,6 +108,7 @@ public abstract class PictureUploadTemplate {
         int picHeight = compressedCiObject.getHeight();
         double picScale = NumberUtil.round(picWidth * 1.0 / picHeight, 2).doubleValue();
         uploadPictureResult.setPicName(FileUtil.mainName(originFilename));
+        uploadPictureResult.setPicSize(compressedCiObject.getSize().longValue());
         uploadPictureResult.setPicWidth(picWidth);
         uploadPictureResult.setPicHeight(picHeight);
         uploadPictureResult.setPicScale(picScale);

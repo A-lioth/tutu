@@ -53,10 +53,10 @@ public class SpaceServiceImpl extends ServiceImpl<SpaceMapper, Space>
     public long addSpace(SpaceAddRequest spaceAddRequest, User loginUser) {
         Space space = new Space();
         BeanUtils.copyProperties(spaceAddRequest, space);
-        if (StrUtil.isNotBlank(space.getSpaceName())) {
+        if (StrUtil.isBlank(spaceAddRequest.getSpaceName())) {
             space.setSpaceName("默认空间");
         }
-        if (space.getSpaceLevel() == null) {
+        if (spaceAddRequest.getSpaceLevel() == null) {
             space.setSpaceLevel(SpaceLevelEnum.COMMON.getValue());
         }
         // * 填充空间信息
@@ -66,7 +66,7 @@ public class SpaceServiceImpl extends ServiceImpl<SpaceMapper, Space>
         // * 校验权限
         Long userId = loginUser.getId();
         space.setUserId(userId);
-        ThrowUtils.throwIf(SpaceLevelEnum.COMMON.getValue() != space.getSpaceLevel(), ErrorCode.NO_AUTH_ERROR, "无操作权限");
+        ThrowUtils.throwIf(SpaceLevelEnum.COMMON.getValue() != space.getSpaceLevel() && !userService.isAdmin(loginUser), ErrorCode.NO_AUTH_ERROR, "无操作权限");
         // * 加锁保证同一用户只能创建一个空间
         String lock = String.valueOf(userId).intern();
         synchronized (lock) {
@@ -75,7 +75,7 @@ public class SpaceServiceImpl extends ServiceImpl<SpaceMapper, Space>
                 Space one = lambdaQuery().eq(Space::getUserId, userId).one();
                 ThrowUtils.throwIf(one != null, ErrorCode.OPERATION_ERROR, "用户已创建空间");
                 boolean result = save(space);
-                ThrowUtils.throwIf(!result, ErrorCode.SYSTEM_ERROR, "创建空间失败");
+                ThrowUtils.throwIf(!result, ErrorCode.OPERATION_ERROR, "创建空间失败");
                 return space.getId();
             });
             return Optional.ofNullable(newSpaceId).orElse(-1L);
