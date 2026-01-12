@@ -1,9 +1,13 @@
 package com.alioth.tutubackend.service.impl;
 
+import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
+import com.alioth.tutubackend.api.aliyunai.ALiYunAiApi;
+import com.alioth.tutubackend.api.aliyunai.model.CreateOutPaintingTaskRequest;
+import com.alioth.tutubackend.api.aliyunai.model.CreateOutPaintingTaskResponse;
 import com.alioth.tutubackend.exception.BusinessException;
 import com.alioth.tutubackend.exception.ErrorCode;
 import com.alioth.tutubackend.exception.ThrowUtils;
@@ -66,6 +70,8 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
     private CosManager cosManager;
     @Resource
     private TransactionTemplate transactionTemplate;
+    @Resource
+    private ALiYunAiApi aLiYunAiApi;
 
     /**
      * 上传图片
@@ -663,5 +669,30 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
             log.error("名称解析错误", e);
             throw new BusinessException(ErrorCode.OPERATION_ERROR, "名称解析错误");
         }
+    }
+
+    /**
+     * 创建图片外画任务
+     *
+     * @param createPictureOutPaintingTaskRequest 创建任务请求
+     * @param loginUser                           登录用户
+     * @return 创建任务结果
+     */
+    @Override
+    public CreateOutPaintingTaskResponse createPictureOutPaintingTask(CreatePictureOutPaintingTaskRequest createPictureOutPaintingTaskRequest, User loginUser) {
+        // * 获取图片信息
+        Long pictureId = createPictureOutPaintingTaskRequest.getPictureId();
+        Picture picture = Optional.ofNullable(this.getById(pictureId))
+                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND_ERROR));
+        // * 权限校验
+        checkPictureAuth(loginUser, picture);
+        // * 构造请求参数
+        CreateOutPaintingTaskRequest taskRequest = new CreateOutPaintingTaskRequest();
+        CreateOutPaintingTaskRequest.Input input = new CreateOutPaintingTaskRequest.Input();
+        input.setImageUrl(picture.getUrl());
+        taskRequest.setInput(input);
+        BeanUtil.copyProperties(createPictureOutPaintingTaskRequest, taskRequest);
+        // * 创建任务
+        return aLiYunAiApi.createOutPaintingTask(taskRequest);
     }
 }

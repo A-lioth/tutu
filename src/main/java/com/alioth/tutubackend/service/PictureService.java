@@ -1,5 +1,6 @@
 package com.alioth.tutubackend.service;
 
+import com.alioth.tutubackend.api.aliyunai.model.CreateOutPaintingTaskResponse;
 import com.alioth.tutubackend.model.dto.picture.*;
 import com.alioth.tutubackend.model.entity.Picture;
 import com.alioth.tutubackend.model.entity.User;
@@ -132,4 +133,13 @@ public interface PictureService extends IService<Picture> {
      * @param loginUser                 登录用户
      */
     void editPictureByBatch(PictureEditByBatchRequest pictureEditByBatchRequest, User loginUser);
+
+    /**
+     * 创建图片扩图任务
+     *
+     * @param createPictureOutPaintingTaskRequest 图片外画任务创建请求
+     * @param loginUser                           登录用户
+     * @return 图片外画任务创建响应
+     */
+    CreateOutPaintingTaskResponse createPictureOutPaintingTask(CreatePictureOutPaintingTaskRequest createPictureOutPaintingTaskRequest, User loginUser);
 }
