@@ -5,10 +5,12 @@ import com.alioth.tutubackend.common.ResultUtils;
 import com.alioth.tutubackend.exception.ErrorCode;
 import com.alioth.tutubackend.exception.ThrowUtils;
 import com.alioth.tutubackend.model.dto.space.analyze.SpaceCategoryAnalyzeRequest;
+import com.alioth.tutubackend.model.dto.space.analyze.SpaceSizeAnalyzeRequest;
 import com.alioth.tutubackend.model.dto.space.analyze.SpaceTagAnalyzeRequest;
 import com.alioth.tutubackend.model.dto.space.analyze.SpaceUsageAnalyzeRequest;
 import com.alioth.tutubackend.model.entity.User;
 import com.alioth.tutubackend.model.vo.space.analyze.SpaceCategoryAnalyzeResponse;
+import com.alioth.tutubackend.model.vo.space.analyze.SpaceSizeAnalyzeResponse;
 import com.alioth.tutubackend.model.vo.space.analyze.SpaceTagAnalyzeResponse;
 import com.alioth.tutubackend.model.vo.space.analyze.SpaceUsageAnalyzeResponse;
 import com.alioth.tutubackend.service.SpaceAnalyzeService;
@@ -72,5 +74,19 @@ public class SpaceAnalyzeController {
         ThrowUtils.throwIf(spaceTagAnalyzeRequest == null, ErrorCode.PARAMS_ERROR);
         User loginUser = userService.getLoginUser(request);
         return ResultUtils.success(spaceAnalyzeService.getSpaceTagAnalyze(spaceTagAnalyzeRequest, loginUser));
+    }
+
+    /**
+     * 获取空间大小分析
+     *
+     * @param spaceSizeAnalyzeRequest 空间大小分析请求
+     * @param request                 请求
+     * @return 空间大小分析响应
+     */
+    @PostMapping("/size")
+    public BaseResponse<List<SpaceSizeAnalyzeResponse>> getSpaceSizeAnalyze(@RequestBody SpaceSizeAnalyzeRequest spaceSizeAnalyzeRequest, HttpServletRequest request) {
+        ThrowUtils.throwIf(spaceSizeAnalyzeRequest == null, ErrorCode.PARAMS_ERROR);
+        User loginUser = userService.getLoginUser(request);
+        return ResultUtils.success(spaceAnalyzeService.getSpaceSizeAnalyze(spaceSizeAnalyzeRequest, loginUser));
     }
 }
