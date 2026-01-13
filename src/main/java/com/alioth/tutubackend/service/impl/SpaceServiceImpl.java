@@ -15,6 +15,7 @@ import com.alioth.tutubackend.model.vo.SpaceVO;
 import com.alioth.tutubackend.service.SpaceService;
 import com.alioth.tutubackend.service.UserService;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import org.springframework.beans.BeanUtils;
@@ -34,7 +35,7 @@ import java.util.stream.Collectors;
  * @createDate 2026-01-05 19:35:28
  */
 @Service
-public class SpaceServiceImpl extends ServiceImpl<SpaceMapper, Space>
+public class SpaceServiceImpl<S extends BaseMapper<Space>, S1> extends ServiceImpl<SpaceMapper, Space>
         implements SpaceService {
 
     @Resource
@@ -201,5 +202,17 @@ public class SpaceServiceImpl extends ServiceImpl<SpaceMapper, Space>
                 space.setMaxCount(maxCount);
             }
         }
+    }
+
+    /**
+     * 检查空间权限
+     *
+     * @param loginUser 登录用户
+     * @param space     空间信息
+     */
+    @Override
+    public void checkSpaceAuth(User loginUser, Space space) {
+        // 仅本人或管理员可编辑
+        ThrowUtils.throwIf(!space.getUserId().equals(loginUser.getId()) && !userService.isAdmin(loginUser), ErrorCode.NO_AUTH_ERROR);
     }
 }

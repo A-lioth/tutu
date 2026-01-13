@@ -5,7 +5,6 @@ import com.alioth.tutubackend.common.BaseResponse;
 import com.alioth.tutubackend.common.DeleteRequest;
 import com.alioth.tutubackend.common.ResultUtils;
 import com.alioth.tutubackend.constant.UserConstant;
-import com.alioth.tutubackend.exception.BusinessException;
 import com.alioth.tutubackend.exception.ErrorCode;
 import com.alioth.tutubackend.exception.ThrowUtils;
 import com.alioth.tutubackend.model.dto.space.*;
@@ -66,9 +65,7 @@ public class SpaceController {
         Space space = spaceService.getById(id);
         ThrowUtils.throwIf(space == null, ErrorCode.NOT_FOUND_ERROR);
         // * 仅本人或管理员可删除
-        if (!userService.isAdmin(loginUser) && !space.getId().equals(loginUser.getId())) {
-            throw new BusinessException(ErrorCode.NO_AUTH_ERROR);
-        }
+        spaceService.checkSpaceAuth(loginUser, space);
         boolean result = spaceService.removeById(id);
         ThrowUtils.throwIf(!result, ErrorCode.OPERATION_ERROR);
         return ResultUtils.success(true);
@@ -196,8 +193,8 @@ public class SpaceController {
         long id = spaceEditRequest.getId();
         Space oldspace = spaceService.getById(id);
         ThrowUtils.throwIf(oldspace == null, ErrorCode.NOT_FOUND_ERROR);
-        // 仅本人或管理员可编辑
-        ThrowUtils.throwIf(!oldspace.getUserId().equals(loginUser.getId()) && !userService.isAdmin(loginUser), ErrorCode.NO_AUTH_ERROR);
+        // 仅本人或管理员可修改
+        spaceService.checkSpaceAuth(loginUser, oldspace);
         // 操作数据库
         boolean result = spaceService.updateById(space);
         ThrowUtils.throwIf(!result, ErrorCode.OPERATION_ERROR);
