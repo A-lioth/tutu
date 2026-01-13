@@ -4,15 +4,9 @@ import com.alioth.tutubackend.common.BaseResponse;
 import com.alioth.tutubackend.common.ResultUtils;
 import com.alioth.tutubackend.exception.ErrorCode;
 import com.alioth.tutubackend.exception.ThrowUtils;
-import com.alioth.tutubackend.model.dto.space.analyze.SpaceCategoryAnalyzeRequest;
-import com.alioth.tutubackend.model.dto.space.analyze.SpaceSizeAnalyzeRequest;
-import com.alioth.tutubackend.model.dto.space.analyze.SpaceTagAnalyzeRequest;
-import com.alioth.tutubackend.model.dto.space.analyze.SpaceUsageAnalyzeRequest;
+import com.alioth.tutubackend.model.dto.space.analyze.*;
 import com.alioth.tutubackend.model.entity.User;
-import com.alioth.tutubackend.model.vo.space.analyze.SpaceCategoryAnalyzeResponse;
-import com.alioth.tutubackend.model.vo.space.analyze.SpaceSizeAnalyzeResponse;
-import com.alioth.tutubackend.model.vo.space.analyze.SpaceTagAnalyzeResponse;
-import com.alioth.tutubackend.model.vo.space.analyze.SpaceUsageAnalyzeResponse;
+import com.alioth.tutubackend.model.vo.space.analyze.*;
 import com.alioth.tutubackend.service.SpaceAnalyzeService;
 import com.alioth.tutubackend.service.UserService;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -88,5 +82,19 @@ public class SpaceAnalyzeController {
         ThrowUtils.throwIf(spaceSizeAnalyzeRequest == null, ErrorCode.PARAMS_ERROR);
         User loginUser = userService.getLoginUser(request);
         return ResultUtils.success(spaceAnalyzeService.getSpaceSizeAnalyze(spaceSizeAnalyzeRequest, loginUser));
+    }
+
+    /**
+     * 获取空间用户行为分析
+     *
+     * @param spaceUserAnalyzeRequest 空间用户行为分析请求
+     * @param request                 请求
+     * @return 空间用户行为分析响应
+     */
+    @PostMapping("/user")
+    public BaseResponse<List<SpaceUserAnalyzeResponse>> getSpaceUserAnalyze(@RequestBody SpaceUserAnalyzeRequest spaceUserAnalyzeRequest, HttpServletRequest request) {
+        ThrowUtils.throwIf(spaceUserAnalyzeRequest == null, ErrorCode.PARAMS_ERROR);
+        User loginUser = userService.getLoginUser(request);
+        return ResultUtils.success(spaceAnalyzeService.getSpaceUserAnalyze(spaceUserAnalyzeRequest, loginUser));
     }
 }

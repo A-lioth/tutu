@@ -1,14 +1,8 @@
 package com.alioth.tutubackend.service;
 
-import com.alioth.tutubackend.model.dto.space.analyze.SpaceCategoryAnalyzeRequest;
-import com.alioth.tutubackend.model.dto.space.analyze.SpaceSizeAnalyzeRequest;
-import com.alioth.tutubackend.model.dto.space.analyze.SpaceTagAnalyzeRequest;
-import com.alioth.tutubackend.model.dto.space.analyze.SpaceUsageAnalyzeRequest;
+import com.alioth.tutubackend.model.dto.space.analyze.*;
 import com.alioth.tutubackend.model.entity.User;
-import com.alioth.tutubackend.model.vo.space.analyze.SpaceCategoryAnalyzeResponse;
-import com.alioth.tutubackend.model.vo.space.analyze.SpaceSizeAnalyzeResponse;
-import com.alioth.tutubackend.model.vo.space.analyze.SpaceTagAnalyzeResponse;
-import com.alioth.tutubackend.model.vo.space.analyze.SpaceUsageAnalyzeResponse;
+import com.alioth.tutubackend.model.vo.space.analyze.*;
 
 import java.util.List;
 
@@ -44,4 +38,12 @@ public interface SpaceAnalyzeService {
      * @return 空间大小使用分析响应
      */
     List<SpaceSizeAnalyzeResponse> getSpaceSizeAnalyze(SpaceSizeAnalyzeRequest spaceSizeAnalyzeRequest, User loginUser);
+
+    /**
+     * 获取空间用户使用分析结果
+     *
+     * @param spaceUserAnalyzeRequest 空间用户使用分析请求
+     * @return 空间用户使用分析响应
+     */
+    List<SpaceUserAnalyzeResponse> getSpaceUserAnalyze(SpaceUserAnalyzeRequest spaceUserAnalyzeRequest, User loginUser);
 }

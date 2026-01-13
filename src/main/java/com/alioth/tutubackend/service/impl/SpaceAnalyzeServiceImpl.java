@@ -11,10 +11,7 @@ import com.alioth.tutubackend.model.dto.space.analyze.*;
 import com.alioth.tutubackend.model.entity.Picture;
 import com.alioth.tutubackend.model.entity.Space;
 import com.alioth.tutubackend.model.entity.User;
-import com.alioth.tutubackend.model.vo.space.analyze.SpaceCategoryAnalyzeResponse;
-import com.alioth.tutubackend.model.vo.space.analyze.SpaceSizeAnalyzeResponse;
-import com.alioth.tutubackend.model.vo.space.analyze.SpaceTagAnalyzeResponse;
-import com.alioth.tutubackend.model.vo.space.analyze.SpaceUsageAnalyzeResponse;
+import com.alioth.tutubackend.model.vo.space.analyze.*;
 import com.alioth.tutubackend.service.PictureService;
 import com.alioth.tutubackend.service.SpaceAnalyzeService;
 import com.alioth.tutubackend.service.SpaceService;
@@ -34,8 +31,7 @@ import java.util.stream.Collectors;
  * @createDate 2026-1-13 17:32:05
  */
 @Service
-public class SpaceAnalyzeServiceImpl extends ServiceImpl<SpaceMapper, Space>
-        implements SpaceAnalyzeService {
+public class SpaceAnalyzeServiceImpl extends ServiceImpl<SpaceMapper, Space> implements SpaceAnalyzeService {
 
     @Resource
     private UserService userService;
@@ -113,18 +109,14 @@ public class SpaceAnalyzeServiceImpl extends ServiceImpl<SpaceMapper, Space>
         fillAnalyzeQueryWrapper(spaceCategoryAnalyzeRequest, queryWrapper);
         // * 使用 MyBatis-Plus 分组查询
         // * select category as category, count(*) as count, sum(picSize) as totalSize from picture group by category
-        queryWrapper
-                .select("category as category", "count(*) as count", "sum(picSize) as totalSize")
-                .groupBy("category");
+        queryWrapper.select("category as category", "count(*) as count", "sum(picSize) as totalSize").groupBy("category");
         // * 查询并转换结果
-        return pictureService.getBaseMapper().selectMaps(queryWrapper)
-                .stream()
-                .map(result -> {
-                    String category = result.get("category") != null ? result.get("category").toString() : "未分类";
-                    Long count = ((Number) result.get("count")).longValue();
-                    Long totalSize = ((Number) result.get("totalSize")).longValue();
-                    return new SpaceCategoryAnalyzeResponse(category, count, totalSize);
-                }).collect(Collectors.toList());
+        return pictureService.getBaseMapper().selectMaps(queryWrapper).stream().map(result -> {
+            String category = result.get("category") != null ? result.get("category").toString() : "未分类";
+            Long count = ((Number) result.get("count")).longValue();
+            Long totalSize = ((Number) result.get("totalSize")).longValue();
+            return new SpaceCategoryAnalyzeResponse(category, count, totalSize);
+        }).collect(Collectors.toList());
     }
 
     /**
@@ -143,20 +135,11 @@ public class SpaceAnalyzeServiceImpl extends ServiceImpl<SpaceMapper, Space>
         QueryWrapper<Picture> queryWrapper = new QueryWrapper<>();
         fillAnalyzeQueryWrapper(spaceTagAnalyzeRequest, queryWrapper);
         queryWrapper.select("tags");
-        List<Object> tagsJsonList = pictureService.getBaseMapper().selectObjs(queryWrapper)
-                .stream()
-                .filter(ObjUtil::isNotNull)
-                .map(Object::toString)
-                .collect(Collectors.toList());
+        List<Object> tagsJsonList = pictureService.getBaseMapper().selectObjs(queryWrapper).stream().filter(ObjUtil::isNotNull).map(Object::toString).collect(Collectors.toList());
         // * 获取标签并统计
-        Map<String, Long> tagCountMap = tagsJsonList.stream()
-                .flatMap(tagsJson -> JSONUtil.toList(tagsJson.toString(), String.class).stream())
-                .collect(Collectors.groupingBy(tag -> tag, Collectors.counting()));
+        Map<String, Long> tagCountMap = tagsJsonList.stream().flatMap(tagsJson -> JSONUtil.toList(tagsJson.toString(), String.class).stream()).collect(Collectors.groupingBy(tag -> tag, Collectors.counting()));
         // * 封装响应结果，按照标签使用次数降序排序
-        return tagCountMap.entrySet().stream()
-                .sorted((entry1, entry2) -> Long.compare(entry2.getValue(), entry1.getValue()))
-                .map(entry -> new SpaceTagAnalyzeResponse(entry.getKey(), entry.getValue()))
-                .collect(Collectors.toList());
+        return tagCountMap.entrySet().stream().sorted((entry1, entry2) -> Long.compare(entry2.getValue(), entry1.getValue())).map(entry -> new SpaceTagAnalyzeResponse(entry.getKey(), entry.getValue())).collect(Collectors.toList());
     }
 
     /**
@@ -176,10 +159,7 @@ public class SpaceAnalyzeServiceImpl extends ServiceImpl<SpaceMapper, Space>
         fillAnalyzeQueryWrapper(spaceSizeAnalyzeRequest, queryWrapper);
         // * 查询所有符合条件的图片大小
         queryWrapper.select("picSize");
-        List<Long> picSizeList = pictureService.getBaseMapper().selectObjs(queryWrapper)
-                .stream()
-                .map(size -> ((Number) size).longValue())
-                .collect(Collectors.toList());
+        List<Long> picSizeList = pictureService.getBaseMapper().selectObjs(queryWrapper).stream().map(size -> ((Number) size).longValue()).collect(Collectors.toList());
         // * 定义分段范围，使用有序 Map
         Map<String, Long> sizeRanges = new LinkedHashMap<>();
         sizeRanges.put("<100KB", picSizeList.stream().filter(size -> size < 100 * 1024).count());
@@ -187,9 +167,55 @@ public class SpaceAnalyzeServiceImpl extends ServiceImpl<SpaceMapper, Space>
         sizeRanges.put("500KB-1MB", picSizeList.stream().filter(size -> size >= 500 * 1024 && size < 1024 * 1024).count());
         sizeRanges.put(">1MB", picSizeList.stream().filter(size -> size >= 1024 * 1024).count());
         // * 转换为响应对象
-        return sizeRanges.entrySet().stream()
-                .map(entry -> new SpaceSizeAnalyzeResponse(entry.getKey(), entry.getValue()))
-                .collect(Collectors.toList());
+        return sizeRanges.entrySet().stream().map(entry -> new SpaceSizeAnalyzeResponse(entry.getKey(), entry.getValue())).collect(Collectors.toList());
+    }
+
+    /**
+     * 获取空间用户行为分析
+     *
+     * @param spaceUserAnalyzeRequest 空间用户行为分析请求
+     * @param loginUser               登录用户
+     * @return 空间用户行为分析结果
+     */
+    @Override
+    public List<SpaceUserAnalyzeResponse> getSpaceUserAnalyze(SpaceUserAnalyzeRequest spaceUserAnalyzeRequest, User loginUser) {
+        ThrowUtils.throwIf(spaceUserAnalyzeRequest == null, ErrorCode.PARAMS_ERROR);
+        // * 检查权限
+        checkSpaceAnalyzeAuth(spaceUserAnalyzeRequest, loginUser);
+        // * 构造查询条件
+        QueryWrapper<Picture> queryWrapper = new QueryWrapper<>();
+        Long userId = spaceUserAnalyzeRequest.getUserId();
+        queryWrapper.eq(ObjUtil.isNotNull(userId), "userId", userId);
+        fillAnalyzeQueryWrapper(spaceUserAnalyzeRequest, queryWrapper);
+        // * 分析维度：每日、每周、每月
+        String timeDimension = spaceUserAnalyzeRequest.getTimeDimension();
+        switch (timeDimension) {
+            // * select DATE_FORMAT(createTime, '%Y-%m-%d') AS period, COUNT(*) AS count from picture
+            // * where userId = ? and createTime >= ? and createTime < ? group by period order by period asc
+            case "day":
+                queryWrapper.select("DATE_FORMAT(createTime, '%Y-%m-%d') AS period", "COUNT(*) AS count");
+                break;
+            // * select YEARWEEK(createTime) AS period, COUNT(*) AS count from picture
+            // * where userId = ? and createTime >= ? and createTime < ? group by period order by period asc
+            case "week":
+                queryWrapper.select("YEARWEEK(createTime) AS period", "COUNT(*) AS count");
+                break;
+            // * select DATE_FORMAT(createTime, '%Y-%m') AS period, COUNT(*) AS count from picture
+            // * where userId = ? and createTime >= ? and createTime < ? group by period order by period asc
+            case "month":
+                queryWrapper.select("DATE_FORMAT(createTime, '%Y-%m') AS period", "COUNT(*) AS count");
+                break;
+            default:
+                throw new BusinessException(ErrorCode.PARAMS_ERROR, "不支持的时间维度");
+        }
+        // * 分组和排序
+        queryWrapper.groupBy("period").orderByAsc("period");
+        // * 查询结果并转换
+        return pictureService.getBaseMapper().selectMaps(queryWrapper).stream().map(result -> {
+            String period = result.get("period").toString();
+            Long count = ((Number) result.get("count")).longValue();
+            return new SpaceUserAnalyzeResponse(period, count);
+        }).collect(Collectors.toList());
     }
 
     /**
