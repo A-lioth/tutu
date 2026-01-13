@@ -5,9 +5,11 @@ import com.alioth.tutubackend.common.ResultUtils;
 import com.alioth.tutubackend.exception.ErrorCode;
 import com.alioth.tutubackend.exception.ThrowUtils;
 import com.alioth.tutubackend.model.dto.space.analyze.SpaceCategoryAnalyzeRequest;
+import com.alioth.tutubackend.model.dto.space.analyze.SpaceTagAnalyzeRequest;
 import com.alioth.tutubackend.model.dto.space.analyze.SpaceUsageAnalyzeRequest;
 import com.alioth.tutubackend.model.entity.User;
 import com.alioth.tutubackend.model.vo.space.analyze.SpaceCategoryAnalyzeResponse;
+import com.alioth.tutubackend.model.vo.space.analyze.SpaceTagAnalyzeResponse;
 import com.alioth.tutubackend.model.vo.space.analyze.SpaceUsageAnalyzeResponse;
 import com.alioth.tutubackend.service.SpaceAnalyzeService;
 import com.alioth.tutubackend.service.UserService;
@@ -57,5 +59,18 @@ public class SpaceAnalyzeController {
         ThrowUtils.throwIf(spaceCategoryAnalyzeRequest == null, ErrorCode.PARAMS_ERROR);
         User loginUser = userService.getLoginUser(request);
         return ResultUtils.success(spaceAnalyzeService.getSpaceCategoryAnalyze(spaceCategoryAnalyzeRequest, loginUser));
+    }
+
+    /**
+     * 获取空间标签使用分析结果
+     *
+     * @param spaceTagAnalyzeRequest 空间标签使用分析请求
+     * @return 空间标签使用分析响应
+     */
+    @PostMapping("/tag")
+    public BaseResponse<List<SpaceTagAnalyzeResponse>> getSpaceTagAnalyze(@RequestBody SpaceTagAnalyzeRequest spaceTagAnalyzeRequest, HttpServletRequest request) {
+        ThrowUtils.throwIf(spaceTagAnalyzeRequest == null, ErrorCode.PARAMS_ERROR);
+        User loginUser = userService.getLoginUser(request);
+        return ResultUtils.success(spaceAnalyzeService.getSpaceTagAnalyze(spaceTagAnalyzeRequest, loginUser));
     }
 }

@@ -1,17 +1,21 @@
 package com.alioth.tutubackend.service.impl;
 
 import cn.hutool.core.util.NumberUtil;
+import cn.hutool.core.util.ObjUtil;
+import cn.hutool.json.JSONUtil;
 import com.alioth.tutubackend.exception.BusinessException;
 import com.alioth.tutubackend.exception.ErrorCode;
 import com.alioth.tutubackend.exception.ThrowUtils;
 import com.alioth.tutubackend.mapper.SpaceMapper;
 import com.alioth.tutubackend.model.dto.space.analyze.SpaceAnalyzeRequest;
 import com.alioth.tutubackend.model.dto.space.analyze.SpaceCategoryAnalyzeRequest;
+import com.alioth.tutubackend.model.dto.space.analyze.SpaceTagAnalyzeRequest;
 import com.alioth.tutubackend.model.dto.space.analyze.SpaceUsageAnalyzeRequest;
 import com.alioth.tutubackend.model.entity.Picture;
 import com.alioth.tutubackend.model.entity.Space;
 import com.alioth.tutubackend.model.entity.User;
 import com.alioth.tutubackend.model.vo.space.analyze.SpaceCategoryAnalyzeResponse;
+import com.alioth.tutubackend.model.vo.space.analyze.SpaceTagAnalyzeResponse;
 import com.alioth.tutubackend.model.vo.space.analyze.SpaceUsageAnalyzeResponse;
 import com.alioth.tutubackend.service.PictureService;
 import com.alioth.tutubackend.service.SpaceAnalyzeService;
@@ -23,6 +27,7 @@ import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
@@ -110,7 +115,7 @@ public class SpaceAnalyzeServiceImpl extends ServiceImpl<SpaceMapper, Space>
         // * 使用 MyBatis-Plus 分组查询
         // * select category as category, count(*) as count, sum(picSize) as totalSize from picture group by category
         queryWrapper
-                .select("category AS category", "COUNT(*) AS count", "SUM(picSize) AS totalSize")
+                .select("category as category", "count(*) as count", "sum(picSize) as totalSize")
                 .groupBy("category");
         // * 查询并转换结果
         return pictureService.getBaseMapper().selectMaps(queryWrapper)
@@ -121,6 +126,38 @@ public class SpaceAnalyzeServiceImpl extends ServiceImpl<SpaceMapper, Space>
                     Long totalSize = ((Number) result.get("totalSize")).longValue();
                     return new SpaceCategoryAnalyzeResponse(category, count, totalSize);
                 }).collect(Collectors.toList());
+    }
+
+    /**
+     * 获取空间标签分析结果
+     *
+     * @param spaceTagAnalyzeRequest 空间标签分析请求
+     * @return 空间标签分析响应
+     */
+    @Override
+    public List<SpaceTagAnalyzeResponse> getSpaceTagAnalyze(SpaceTagAnalyzeRequest spaceTagAnalyzeRequest, User loginUser) {
+        // * 校验参数
+        ThrowUtils.throwIf(spaceTagAnalyzeRequest == null, ErrorCode.PARAMS_ERROR);
+        // * 校验权限
+        checkSpaceAnalyzeAuth(spaceTagAnalyzeRequest, loginUser);
+        // * 获取查询条件
+        QueryWrapper<Picture> queryWrapper = new QueryWrapper<>();
+        fillAnalyzeQueryWrapper(spaceTagAnalyzeRequest, queryWrapper);
+        queryWrapper.select("tags");
+        List<Object> tagsJsonList = pictureService.getBaseMapper().selectObjs(queryWrapper)
+                .stream()
+                .filter(ObjUtil::isNotNull)
+                .map(Object::toString)
+                .collect(Collectors.toList());
+        // * 获取标签并统计
+        Map<String, Long> tagCountMap = tagsJsonList.stream()
+                .flatMap(tagsJson -> JSONUtil.toList(tagsJson.toString(), String.class).stream())
+                .collect(Collectors.groupingBy(tag -> tag, Collectors.counting()));
+        // * 封装响应结果，按照标签使用次数降序排序
+        return tagCountMap.entrySet().stream()
+                .sorted((entry1, entry2) -> Long.compare(entry2.getValue(), entry1.getValue()))
+                .map(entry -> new SpaceTagAnalyzeResponse(entry.getKey(), entry.getValue()))
+                .collect(Collectors.toList());
     }
 
     /**
