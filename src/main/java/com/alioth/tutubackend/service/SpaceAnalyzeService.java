@@ -1,6 +1,7 @@
 package com.alioth.tutubackend.service;
 
 import com.alioth.tutubackend.model.dto.space.analyze.*;
+import com.alioth.tutubackend.model.entity.Space;
 import com.alioth.tutubackend.model.entity.User;
 import com.alioth.tutubackend.model.vo.space.analyze.*;
 
@@ -46,4 +47,12 @@ public interface SpaceAnalyzeService {
      * @return 空间用户使用分析响应
      */
     List<SpaceUserAnalyzeResponse> getSpaceUserAnalyze(SpaceUserAnalyzeRequest spaceUserAnalyzeRequest, User loginUser);
+
+    /**
+     * 获取空间使用排行
+     *
+     * @param spaceRankAnalyzeRequest 空间使用排行请求
+     * @return 空间使用排行响应
+     */
+    List<Space> getSpaceRankAnalyze(SpaceRankAnalyzeRequest spaceRankAnalyzeRequest, User loginUser);
 }

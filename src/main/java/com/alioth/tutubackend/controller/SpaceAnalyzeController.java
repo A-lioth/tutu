@@ -5,6 +5,7 @@ import com.alioth.tutubackend.common.ResultUtils;
 import com.alioth.tutubackend.exception.ErrorCode;
 import com.alioth.tutubackend.exception.ThrowUtils;
 import com.alioth.tutubackend.model.dto.space.analyze.*;
+import com.alioth.tutubackend.model.entity.Space;
 import com.alioth.tutubackend.model.entity.User;
 import com.alioth.tutubackend.model.vo.space.analyze.*;
 import com.alioth.tutubackend.service.SpaceAnalyzeService;
@@ -96,5 +97,20 @@ public class SpaceAnalyzeController {
         ThrowUtils.throwIf(spaceUserAnalyzeRequest == null, ErrorCode.PARAMS_ERROR);
         User loginUser = userService.getLoginUser(request);
         return ResultUtils.success(spaceAnalyzeService.getSpaceUserAnalyze(spaceUserAnalyzeRequest, loginUser));
+    }
+
+    /**
+     * 获取空间使用排行
+     *
+     * @param spaceRankAnalyzeRequest 空间使用排行请求
+     * @param request                 请求
+     * @return 空间使用排行响应
+     */
+    @PostMapping("/topN")
+    public BaseResponse<List<Space>> getSpaceTopNAnalyze(@RequestBody SpaceRankAnalyzeRequest spaceRankAnalyzeRequest, HttpServletRequest request) {
+        ThrowUtils.throwIf(spaceRankAnalyzeRequest == null, ErrorCode.PARAMS_ERROR);
+        User loginUser = userService.getLoginUser(request);
+        List<Space> spaceList = spaceAnalyzeService.getSpaceRankAnalyze(spaceRankAnalyzeRequest, loginUser);
+        return ResultUtils.success(spaceList);
     }
 }
